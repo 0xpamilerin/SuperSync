@@ -19,7 +19,7 @@ export default async function LandingPage() {
       <header className="px-6 lg:px-14 h-16 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
           <BookOpen className="h-6 w-6 text-primary" />
-          <span>SPMS</span>
+          <span>SuperSync</span>
         </div>
         <nav className="ml-auto flex gap-3 sm:gap-5 items-center">
           <Link className="text-sm font-medium hover:text-primary transition-colors hidden sm:block" href="#features">
@@ -152,7 +152,7 @@ export default async function LandingPage() {
       <footer className="w-full border-t py-6 bg-background">
         <div className="container px-4 md:px-6 mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2026 Student Project Management System. All rights reserved.
+            © 2026 SuperSync. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="#" className="hover:underline">Terms of Service</Link>

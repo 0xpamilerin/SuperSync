@@ -11,8 +11,8 @@ import { Toaster } from "@/components/ui/toast";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Student Project Management System",
-  description: "Web-Based Student Project Management System",
+  title: "SuperSync - Student Project Management System",
+  description: "SuperSync: Web-Based Student Project Management System",
 };
 
 export default function RootLayout({

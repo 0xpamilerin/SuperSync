@@ -64,7 +64,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       <div className="flex h-16 items-center border-b px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <GraduationCap className="h-6 w-6 text-primary" />
-          {!isCollapsed && <span className="truncate">SPMS</span>}
+          {!isCollapsed && <span className="truncate font-bold">SuperSync</span>}
         </Link>
       </div>
 

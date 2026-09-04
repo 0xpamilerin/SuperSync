@@ -83,7 +83,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <GraduationCap className="h-6 w-6 text-primary" />
-                <span className="font-bold text-lg">SPMS</span>
+                <span className="font-bold text-lg">SuperSync</span>
               </Link>
               <Button 
                 variant="ghost" 
