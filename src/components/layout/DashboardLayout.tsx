@@ -61,7 +61,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 flex-col sm:gap-4 md:py-0 w-full">
         <Topbar onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)} />
         
-        <main className="flex-1 items-start p-4 sm:px-6 sm:py-0 md:p-8 max-w-[1600px] mx-auto w-full pb-20 md:pb-8">
+        <main className="flex-1 items-start p-4 sm:p-6 md:p-8 max-w-[1600px] mx-auto w-full pb-24 md:pb-8">
           {children}
         </main>
       </div>
