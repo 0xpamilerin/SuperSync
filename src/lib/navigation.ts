@@ -1,13 +1,5 @@
 export type UserRole = "student" | "supervisor" | "admin";
 
-export const currentUser = {
-  name: "John Doe",
-  email: "john.doe@ui.edu.ng",
-  role: "student" as UserRole,
-  avatarUrl: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-  department: "Computer Science",
-};
-
 export const getNavItems = (role: UserRole) => {
   const items = {
     student: [
@@ -44,5 +36,5 @@ export const getNavItems = (role: UserRole) => {
       { title: "System Settings", href: "/admin/settings", icon: "Settings" },
     ],
   };
-  return items[role];
+  return items[role] || items.student;
 };

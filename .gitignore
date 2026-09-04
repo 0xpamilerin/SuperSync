@@ -42,3 +42,7 @@ next-env.d.ts
 
 /src/generated/prisma
 /uploads
+
+# IDE & agent tools
+.windsurf
+.claude

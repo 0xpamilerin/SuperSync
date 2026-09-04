@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { getNavItems, currentUser } from "@/lib/mock-data"
+import { getNavItems, UserRole } from "@/lib/navigation"
 import { 
   LayoutDashboard, FileText, BookOpen, TrendingUp, ChevronLeft, ChevronRight, GraduationCap,
   User, Lightbulb, MessageSquare, Calendar, Folder, Bell, Users, FileCheck, BookCheck, BarChart, 
@@ -46,7 +46,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const { data: session } = useSession()
   
   // Use session role, fallback to path-based detection if loading
-  let role = session?.user?.role?.toLowerCase() || currentUser.role
+  let role = session?.user?.role?.toLowerCase() || "student"
   
   if (pathname.startsWith("/supervisor")) role = "supervisor"
   else if (pathname.startsWith("/admin")) role = "admin"

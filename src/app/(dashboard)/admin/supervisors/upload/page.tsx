@@ -9,11 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-const MOCK_PARSED_DATA = [
-  { name: "Dr. Smith", email: "dr.smith@ui.edu.ng", staffId: "SF101", department: "Computer Science", maxStudents: 5 },
-  { name: "Prof. Johnson", email: "prof.johnson@ui.edu.ng", staffId: "SF102", department: "Computer Science", maxStudents: 3 },
-  { name: "Dr. Williams", email: "dr.williams@ui.edu.ng", staffId: "SF103", department: "Information Technology", maxStudents: 4 },
-]
 import { uploadSupervisorsCSV } from "@/app/actions/admin"
 
 export default function BulkUploadSupervisorsPage() {

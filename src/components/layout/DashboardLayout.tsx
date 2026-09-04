@@ -10,7 +10,7 @@ import { MobileNav } from "./MobileNav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { getNavItems, currentUser } from "@/lib/mock-data"
+import { getNavItems, UserRole } from "@/lib/navigation"
 import { 
   LayoutDashboard, FileText, BookOpen, TrendingUp, Bell, User,
   Lightbulb, MessageSquare, Calendar, Folder, Users, FileCheck, 
@@ -47,7 +47,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { data: session } = useSession()
 
-  let role = session?.user?.role?.toLowerCase() || currentUser.role
+  let role = session?.user?.role?.toLowerCase() || "student"
   if (pathname.startsWith("/supervisor")) role = "supervisor"
   else if (pathname.startsWith("/admin")) role = "admin"
   else if (pathname.startsWith("/student")) role = "student"

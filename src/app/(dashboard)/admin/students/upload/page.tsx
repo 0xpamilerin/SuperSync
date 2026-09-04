@@ -9,11 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-const MOCK_PARSED_DATA = [
-  { name: "Alice Johnson", email: "alice.j@ui.edu.ng", matric: "182001", department: "Computer Science" },
-  { name: "Bob Williams", email: "bob.w@ui.edu.ng", matric: "182002", department: "Computer Science" },
-  { name: "Charlie Davis", email: "charlie.d@ui.edu.ng", matric: "182003", department: "Computer Science" },
-]
 import { uploadStudentsCSV } from "@/app/actions/admin"
 
 export default function BulkUploadStudentsPage() {
