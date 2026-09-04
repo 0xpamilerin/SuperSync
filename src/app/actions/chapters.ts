@@ -4,17 +4,16 @@ import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { ChapterStatus } from "../../../generated/prisma/client"
+import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
 export async function createChapter(data: { title: string; number: number; fileUrl: string; fileName: string; fileSize: number }) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "STUDENT") {
+    if (!session?.user || session.user.role !== "STUDENT") {
       return { success: false, error: "Unauthorized" }
     }
 
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
-    })
+    const studentProfile = await resolveStudentProfile(session)
 
     if (!studentProfile) {
       return { success: false, error: "Student profile not found" }
@@ -42,11 +41,9 @@ export async function createChapter(data: { title: string; number: number; fileU
 
 export async function getStudentChapters() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "STUDENT") return []
+  if (!session?.user || session.user.role !== "STUDENT") return []
 
-  const studentProfile = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id }
-  })
+  const studentProfile = await resolveStudentProfile(session)
 
   if (!studentProfile) return []
 
@@ -59,11 +56,9 @@ export async function getStudentChapters() {
 
 export async function getSupervisorChapters() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") return []
+  if (!session?.user || session.user.role !== "SUPERVISOR") return []
 
-  const supervisorProfile = await prisma.supervisorProfile.findUnique({
-    where: { userId: session.user.id }
-  })
+  const supervisorProfile = await resolveSupervisorProfile(session)
 
   if (!supervisorProfile) return []
 
@@ -86,7 +81,7 @@ export async function getSupervisorChapters() {
 export async function reviewChapter(chapterId: string, status: ChapterStatus) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") {
+    if (!session?.user || session.user.role !== "SUPERVISOR") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -105,7 +100,7 @@ export async function reviewChapter(chapterId: string, status: ChapterStatus) {
 
 export async function getChapterById(id: string) {
   const session = await auth()
-  if (!session || !session.user?.id) return null
+  if (!session?.user) return null
 
   return prisma.chapter.findUnique({
     where: { id },

@@ -3,11 +3,11 @@ import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { getChapterById } from "@/app/actions/chapters"
 import { ChapterReviewClient } from "./ChapterReviewClient"
-import prisma from "@/lib/db"
+import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
 export default async function ChapterReviewPage({ params }: { params: { id: string } }) {
   const session = await auth()
-  if (!session || !session.user?.id) {
+  if (!session?.user) {
     redirect("/login")
   }
 
@@ -18,18 +18,14 @@ export default async function ChapterReviewPage({ params }: { params: { id: stri
 
   // Security check: only allow student who owns it, or their supervisor
   if (session.user.role === "STUDENT") {
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
-    })
+    const studentProfile = await resolveStudentProfile(session)
     if (studentProfile?.id !== chapter.studentId) {
-      redirect("/student/dashboard")
+      redirect("/student")
     }
   } else if (session.user.role === "SUPERVISOR") {
-    const supervisorProfile = await prisma.supervisorProfile.findUnique({
-      where: { userId: session.user.id }
-    })
+    const supervisorProfile = await resolveSupervisorProfile(session)
     if (supervisorProfile?.id !== chapter.student.supervisorId) {
-      redirect("/supervisor/dashboard")
+      redirect("/supervisor")
     }
   } else if (session.user.role !== "ADMIN") {
     redirect("/login")

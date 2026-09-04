@@ -4,17 +4,16 @@ import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { TopicStatus } from "../../../generated/prisma/client"
+import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
 export async function submitProposal(data: any, actionType: "draft" | "submit") {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "STUDENT") {
+    if (!session?.user || session.user.role !== "STUDENT") {
       return { success: false, error: "Unauthorized" }
     }
 
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
-    })
+    const studentProfile = await resolveStudentProfile(session)
 
     if (!studentProfile) {
       return { success: false, error: "Student profile not found" }
@@ -55,26 +54,24 @@ export async function submitProposal(data: any, actionType: "draft" | "submit") 
 
 export async function getStudentProposal() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "STUDENT") return null
+  if (!session?.user || session.user.role !== "STUDENT") return null
 
-  const studentProfile = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id },
-    include: { topics: true }
+  const studentProfile = await resolveStudentProfile(session)
+  if (!studentProfile) return null
+
+  const topic = await prisma.topic.findFirst({
+    where: { studentId: studentProfile.id },
+    orderBy: { updatedAt: "desc" }
   })
 
-  if (!studentProfile || studentProfile.topics.length === 0) return null
-
-  return studentProfile.topics[0]
+  return topic
 }
 
 export async function getSupervisorProposals() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") return []
+  if (!session?.user || session.user.role !== "SUPERVISOR") return []
 
-  const supervisorProfile = await prisma.supervisorProfile.findUnique({
-    where: { userId: session.user.id }
-  })
-
+  const supervisorProfile = await resolveSupervisorProfile(session)
   if (!supervisorProfile) return []
 
   const topics = await prisma.topic.findMany({
@@ -97,7 +94,7 @@ export async function getSupervisorProposals() {
 export async function reviewProposal(topicId: string, status: TopicStatus, reviewNotes: string) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") {
+    if (!session?.user || session.user.role !== "SUPERVISOR") {
       return { success: false, error: "Unauthorized" }
     }
 

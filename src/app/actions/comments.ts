@@ -3,18 +3,24 @@
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
+import { resolveUser } from "@/lib/user-helper"
 
 export async function addComment(chapterId: string, content: string) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id) {
+    if (!session?.user) {
       return { success: false, error: "Unauthorized" }
+    }
+
+    const resolvedUser = await resolveUser(session)
+    if (!resolvedUser) {
+      return { success: false, error: "User not found" }
     }
 
     await prisma.comment.create({
       data: {
         chapterId,
-        authorId: session.user.id,
+        authorId: resolvedUser.id,
         content
       }
     })
@@ -29,7 +35,7 @@ export async function addComment(chapterId: string, content: string) {
 export async function resolveComment(commentId: string, chapterId: string) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id) {
+    if (!session?.user) {
       return { success: false, error: "Unauthorized" }
     }
 

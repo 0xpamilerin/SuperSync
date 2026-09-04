@@ -5,13 +5,19 @@ import { auth } from "@/auth"
 
 export async function getStudentDashboardData() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "STUDENT") {
+  if (!session || !session.user || session.user.role !== "STUDENT") {
     return null
   }
 
-  const studentProfile = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id },
+  let studentProfile = await prisma.studentProfile.findFirst({
+    where: {
+      OR: [
+        ...(session.user.id ? [{ userId: session.user.id }] : []),
+        ...(session.user.email ? [{ user: { email: session.user.email } }] : [])
+      ]
+    },
     include: {
+      user: true,
       supervisor: {
         include: { user: true }
       },
@@ -29,6 +35,45 @@ export async function getStudentDashboardData() {
       }
     }
   })
+
+  // Self-heal: if student user exists in database but has no profile, create default profile
+  if (!studentProfile && session.user.email) {
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+    if (user && user.role === "STUDENT") {
+      let dept = await prisma.department.findFirst()
+      if (!dept) {
+        dept = await prisma.department.create({
+          data: { name: "Computer Science", code: "CSC" }
+        })
+      }
+      studentProfile = await prisma.studentProfile.create({
+        data: {
+          userId: user.id,
+          matricNumber: `MAT${Math.floor(100000 + Math.random() * 900000)}`,
+          departmentId: dept.id,
+          level: 400
+        },
+        include: {
+          user: true,
+          supervisor: {
+            include: { user: true }
+          },
+          topics: {
+            orderBy: { updatedAt: 'desc' },
+            take: 1
+          },
+          chapters: {
+            orderBy: { submittedAt: 'desc' }
+          },
+          meetings: {
+            where: { date: { gte: new Date() } },
+            orderBy: { date: 'asc' },
+            take: 3
+          }
+        }
+      })
+    }
+  }
 
   if (!studentProfile) return null
 
@@ -53,12 +98,17 @@ export async function getStudentDashboardData() {
 
 export async function getSupervisorDashboardData() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") {
+  if (!session || !session.user || session.user.role !== "SUPERVISOR") {
     return null
   }
 
-  const supervisorProfile = await prisma.supervisorProfile.findUnique({
-    where: { userId: session.user.id },
+  let supervisorProfile = await prisma.supervisorProfile.findFirst({
+    where: {
+      OR: [
+        ...(session.user.id ? [{ userId: session.user.id }] : []),
+        ...(session.user.email ? [{ user: { email: session.user.email } }] : [])
+      ]
+    },
     include: {
       assignedStudents: true,
       meetings: {
@@ -69,6 +119,36 @@ export async function getSupervisorDashboardData() {
       }
     }
   })
+
+  // Self-heal supervisor profile
+  if (!supervisorProfile && session.user.email) {
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+    if (user && user.role === "SUPERVISOR") {
+      let dept = await prisma.department.findFirst()
+      if (!dept) {
+        dept = await prisma.department.create({
+          data: { name: "Computer Science", code: "CSC" }
+        })
+      }
+      supervisorProfile = await prisma.supervisorProfile.create({
+        data: {
+          userId: user.id,
+          staffId: `STAFF${Math.floor(1000 + Math.random() * 9000)}`,
+          departmentId: dept.id,
+          maxStudents: 5
+        },
+        include: {
+          assignedStudents: true,
+          meetings: {
+            where: { date: { gte: new Date() } },
+            orderBy: { date: 'asc' },
+            take: 5,
+            include: { student: { include: { user: true } } }
+          }
+        }
+      })
+    }
+  }
 
   if (!supervisorProfile) return null
 
@@ -107,7 +187,7 @@ export async function getSupervisorDashboardData() {
 
 export async function getAdminDashboardData() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "ADMIN") {
+  if (!session || !session.user || session.user.role !== "ADMIN") {
     return null
   }
 

@@ -30,7 +30,20 @@ export default async function StudentDashboard() {
   const data = await getStudentDashboardData()
   
   if (!data) {
-    return <div>Failed to load dashboard data.</div>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8 text-center rounded-2xl border border-border bg-card">
+        <div className="rounded-full bg-primary/10 p-3 text-primary">
+          <FileText className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-bold">Unable to load student data</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Your profile session could not be retrieved. Please sign in again to refresh your credentials.
+        </p>
+        <Link href="/login" className={buttonVariants({ variant: "default" })}>
+          Sign In Again
+        </Link>
+      </div>
+    )
   }
 
   const { studentProfile, stats } = data

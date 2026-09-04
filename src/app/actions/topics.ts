@@ -4,17 +4,16 @@ import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { TopicStatus } from "../../../generated/prisma/client"
+import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
 export async function submitTopic(data: { title: string; description: string }) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "STUDENT") {
+    if (!session?.user || session.user.role !== "STUDENT") {
       return { success: false, error: "Unauthorized" }
     }
 
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
-    })
+    const studentProfile = await resolveStudentProfile(session)
 
     if (!studentProfile) {
       return { success: false, error: "Student profile not found" }
@@ -38,11 +37,9 @@ export async function submitTopic(data: { title: string; description: string }) 
 
 export async function getStudentTopics() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "STUDENT") return []
+  if (!session?.user || session.user.role !== "STUDENT") return []
 
-  const studentProfile = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id },
-  })
+  const studentProfile = await resolveStudentProfile(session)
 
   if (!studentProfile) return []
 
@@ -54,11 +51,9 @@ export async function getStudentTopics() {
 
 export async function getSupervisorTopics() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") return []
+  if (!session?.user || session.user.role !== "SUPERVISOR") return []
 
-  const supervisorProfile = await prisma.supervisorProfile.findUnique({
-    where: { userId: session.user.id }
-  })
+  const supervisorProfile = await resolveSupervisorProfile(session)
 
   if (!supervisorProfile) return []
 
@@ -80,7 +75,7 @@ export async function getSupervisorTopics() {
 export async function reviewTopic(topicId: string, status: TopicStatus, reviewNotes: string) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") {
+    if (!session?.user || session.user.role !== "SUPERVISOR") {
       return { success: false, error: "Unauthorized" }
     }
 

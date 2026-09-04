@@ -4,17 +4,16 @@ import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { MeetingStatus } from "../../../generated/prisma/client"
+import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
 export async function scheduleMeeting(studentId: string, date: Date, agenda: string) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") {
+    if (!session?.user || session.user.role !== "SUPERVISOR") {
       return { success: false, error: "Unauthorized" }
     }
 
-    const supervisorProfile = await prisma.supervisorProfile.findUnique({
-      where: { userId: session.user.id }
-    })
+    const supervisorProfile = await resolveSupervisorProfile(session)
 
     if (!supervisorProfile) {
       return { success: false, error: "Supervisor profile not found" }
@@ -39,11 +38,9 @@ export async function scheduleMeeting(studentId: string, date: Date, agenda: str
 
 export async function getStudentMeetings() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "STUDENT") return []
+  if (!session?.user || session.user.role !== "STUDENT") return []
 
-  const studentProfile = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id }
-  })
+  const studentProfile = await resolveStudentProfile(session)
 
   if (!studentProfile) return []
 
@@ -60,11 +57,9 @@ export async function getStudentMeetings() {
 
 export async function getSupervisorMeetings() {
   const session = await auth()
-  if (!session || !session.user?.id || session.user?.role !== "SUPERVISOR") return []
+  if (!session?.user || session.user.role !== "SUPERVISOR") return []
 
-  const supervisorProfile = await prisma.supervisorProfile.findUnique({
-    where: { userId: session.user.id }
-  })
+  const supervisorProfile = await resolveSupervisorProfile(session)
 
   if (!supervisorProfile) return []
 
@@ -82,7 +77,7 @@ export async function getSupervisorMeetings() {
 export async function updateMeetingStatus(meetingId: string, status: MeetingStatus, notes?: string) {
   try {
     const session = await auth()
-    if (!session || !session.user?.id) {
+    if (!session?.user) {
       return { success: false, error: "Unauthorized" }
     }
 
