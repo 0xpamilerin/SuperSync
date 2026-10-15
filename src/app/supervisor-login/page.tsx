@@ -154,16 +154,6 @@ export default function SupervisorLoginPage() {
                         >
                           Student
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setValue("email", "admin@supersync.edu")
-                            setValue("password", "password123")
-                          }}
-                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-background hover:bg-muted text-foreground border shadow-xs transition-colors"
-                        >
-                          Admin
-                        </button>
                       </div>
                     </div>
 
@@ -271,13 +261,6 @@ export default function SupervisorLoginPage() {
                 </Link>
                 <span>&bull;</span>
                 <Link
-                  href="/admin-login"
-                  className="hover:text-primary transition-colors hover:underline"
-                >
-                  Admin Portal
-                </Link>
-                <span>&bull;</span>
-                <Link
                   href="/"
                   className="hover:text-primary transition-colors hover:underline"
                 >
@@ -286,6 +269,19 @@ export default function SupervisorLoginPage() {
               </div>
             </div>
           </div>
+
+          {/* Discreet Footer Link for System Administration */}
+          <footer className="text-center text-xs text-muted-foreground">
+            <p>
+              University Staff or Administrator?{" "}
+              <Link
+                href="/admin-login"
+                className="font-medium text-foreground hover:text-primary underline underline-offset-4 transition-colors"
+              >
+                Admin Portal &rarr;
+              </Link>
+            </p>
+          </footer>
         </div>
       </div>
     </div>

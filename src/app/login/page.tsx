@@ -154,16 +154,6 @@ export default function LoginPage() {
                         >
                           Supervisor
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setValue("email", "admin@supersync.edu")
-                            setValue("password", "password123")
-                          }}
-                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-background hover:bg-primary hover:text-primary-foreground text-foreground border shadow-xs transition-colors"
-                        >
-                          Admin
-                        </button>
                       </div>
                     </div>
 
@@ -262,18 +252,27 @@ export default function LoginPage() {
                 </Link>
               </p>
 
-              <div className="flex items-center gap-3 text-xs text-muted-foreground pt-3 border-t w-full justify-center">
-                <span>Portals:</span>
-                <Link href="/supervisor-login" className="hover:text-primary hover:underline font-medium">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-3 border-t w-full justify-center">
+                <span>Are you a supervisor?</span>
+                <Link href="/supervisor-login" className="text-[#4F46E5] hover:underline font-medium">
                   Supervisor Portal &rarr;
-                </Link>
-                <span>•</span>
-                <Link href="/admin-login" className="hover:text-primary hover:underline font-medium">
-                  Admin Portal &rarr;
                 </Link>
               </div>
             </div>
           </div>
+
+          {/* Discreet Footer Link for System Administration */}
+          <footer className="text-center text-xs text-muted-foreground">
+            <p>
+              University Staff or Administrator?{" "}
+              <Link
+                href="/admin-login"
+                className="font-medium text-foreground hover:text-primary underline underline-offset-4 transition-colors"
+              >
+                Admin Portal &rarr;
+              </Link>
+            </p>
+          </footer>
         </div>
       </div>
     </div>
