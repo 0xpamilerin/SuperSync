@@ -13,6 +13,14 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "SuperSync - Student Project Management System",
   description: "SuperSync: Web-Based Student Project Management System",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 import { DemoRoleSwitcher } from "@/components/DemoRoleSwitcher";

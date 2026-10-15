@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="50%" stop-color="#4338CA" />
+      <stop offset="100%" stop-color="#3730A3" />
+    </linearGradient>
+    <filter id="cap-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  
+  <!-- Rounded squircle badge -->
+  <rect width="48" height="48" rx="11" fill="url(#bg-grad)" />
+  <rect x="1" y="1" width="46" height="46" rx="10" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.2" />
+
+  <!-- Graduation Cap (SuperSync Academic Icon) -->
+  <g filter="url(#cap-shadow)">
+    <!-- Mortarboard Top -->
+    <path d="M24 11 L41 19 L24 27 L7 19 Z" fill="#FFFFFF" />
+    
+    <!-- Skull Cap Base -->
+    <path d="M14 23.5 V29 C14 34.5 34 34.5 34 29 V23.5 C31 25.5 27.5 26.5 24 26.5 C20.5 26.5 17 25.5 14 23.5 Z" fill="#E0E7FF" />
+    
+    <!-- Tassel -->
+    <path d="M39 19.5 V28 C39 30 37.5 31 36 31" fill="none" stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="36" cy="31" r="1.5" fill="#38BDF8" />
+    
+    <!-- Center Button -->
+    <circle cx="24" cy="19" r="2.2" fill="#38BDF8" />
+  </g>
+</svg>
