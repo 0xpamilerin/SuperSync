@@ -44,7 +44,41 @@ export async function createAnnouncement(data: {
     data
   })
 
+  if (data.status === "Published") {
+    try {
+      let roleFilter = {}
+      if (data.target === "Students") {
+        roleFilter = { role: "STUDENT" }
+      } else if (data.target === "Supervisors") {
+        roleFilter = { role: "SUPERVISOR" }
+      } else {
+        roleFilter = { role: { in: ["STUDENT", "SUPERVISOR"] } }
+      }
+
+      const targetUsers = await prisma.user.findMany({
+        where: roleFilter,
+        select: { id: true }
+      })
+
+      if (targetUsers.length > 0) {
+        await prisma.notification.createMany({
+          data: targetUsers.map(u => ({
+            userId: u.id,
+            title: `Announcement: ${data.title}`,
+            message: data.content.slice(0, 120) + (data.content.length > 120 ? "..." : ""),
+            type: "SYSTEM",
+            link: "/notifications"
+          }))
+        })
+      }
+    } catch (notifErr) {
+      console.error("Failed to broadcast announcement notification:", notifErr)
+    }
+  }
+
   revalidatePath("/admin/announcements")
+  revalidatePath("/student")
+  revalidatePath("/supervisor")
   revalidatePath("/")
   return announcement
 }
@@ -66,6 +100,8 @@ export async function updateAnnouncement(id: string, data: {
   })
 
   revalidatePath("/admin/announcements")
+  revalidatePath("/student")
+  revalidatePath("/supervisor")
   revalidatePath("/")
   return announcement
 }

@@ -33,6 +33,7 @@ export default function ProposalPage() {
   const {
     register,
     handleSubmit,
+    getValues,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ProposalFormValues>({
@@ -69,11 +70,16 @@ export default function ProposalPage() {
     if (result.success) {
       toast({
         title: actionType === "draft" ? "Draft Saved" : "Proposal Submitted",
-        description: "Your proposal has been saved successfully.",
+        description: actionType === "draft" ? "Your proposal draft has been saved." : "Your proposal has been submitted for review.",
+        type: "success"
       })
       await loadTopic()
     } else {
-      alert(`Error: ${result.error}`)
+      toast({
+        title: "Action Failed",
+        description: result.error || "Failed to save proposal",
+        variant: "destructive"
+      })
     }
   }
 
@@ -193,7 +199,7 @@ export default function ProposalPage() {
         <CardFooter className="flex justify-between border-t p-6">
           <Button 
             variant="outline" 
-            onClick={handleSubmit((d) => onSubmit(d, "draft"))}
+            onClick={() => onSubmit(getValues(), "draft")}
             disabled={isSubmitting || isReadOnly}
           >
             Save Draft

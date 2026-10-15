@@ -13,16 +13,25 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/supervisor-login") ||
     nextUrl.pathname.startsWith("/supervisor-register") ||
     nextUrl.pathname.startsWith("/admin-login") ||
-    nextUrl.pathname.startsWith("/admin-register");
+    nextUrl.pathname.startsWith("/admin-register") ||
+    nextUrl.pathname.startsWith("/forgot-password");
+
+  const isPublicRoute =
+    nextUrl.pathname === "/" ||
+    nextUrl.pathname.startsWith("/unauthorized");
   
   if (isAuthRoute) {
     if (isLoggedIn) {
       // Redirect based on role if they try to access login while already logged in
-      const role = req.auth?.user?.role
+      const role = req.auth?.user?.role?.toUpperCase()
       if (role === "ADMIN") return Response.redirect(new URL("/admin", nextUrl))
       if (role === "SUPERVISOR") return Response.redirect(new URL("/supervisor", nextUrl))
       return Response.redirect(new URL("/student", nextUrl))
     }
+    return
+  }
+
+  if (isPublicRoute) {
     return
   }
   
@@ -38,10 +47,10 @@ export default auth((req) => {
   }
   
   // Role-based protection
-  const role = req.auth?.user?.role
+  const role = req.auth?.user?.role?.toUpperCase()
   
   if (nextUrl.pathname.startsWith("/admin") && role !== "ADMIN") {
-    return Response.redirect(new URL("/unauthorized", nextUrl)) // Or just redirect to their dashboard
+    return Response.redirect(new URL("/unauthorized", nextUrl))
   }
   
   if (nextUrl.pathname.startsWith("/supervisor") && role !== "SUPERVISOR") {

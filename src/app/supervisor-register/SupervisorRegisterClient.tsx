@@ -81,7 +81,7 @@ export default function SupervisorRegisterClient({
           router.push("/supervisor-login")
         }, 2000)
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setIsLoading(false)

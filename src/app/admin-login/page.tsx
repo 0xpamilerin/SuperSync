@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { signIn } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react"
@@ -40,8 +40,8 @@ export default function AdminLoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "admin@supersync.edu",
+      password: "password123",
       rememberMe: false,
     },
   })
@@ -59,13 +59,25 @@ export default function AdminLoginPage() {
 
       if (result?.error) {
         setError("Invalid email or password")
-      } else {
-        router.push("/")
-        router.refresh()
+        setIsLoading(false)
+        return
       }
-    } catch (err) {
+
+      const session = await getSession()
+      const role = session?.user?.role?.toUpperCase()
+
+      if (role === "ADMIN") {
+        router.push("/admin")
+      } else if (role === "SUPERVISOR") {
+        router.push("/supervisor")
+      } else if (role === "STUDENT") {
+        router.push("/student")
+      } else {
+        router.push("/admin")
+      }
+      router.refresh()
+    } catch {
       setError("An unexpected error occurred. Please try again.")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -113,6 +125,42 @@ export default function AdminLoginPage() {
               <div className="grid gap-6">
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <div className="grid gap-4">
+                    <div className="flex items-center justify-between gap-1 p-1.5 bg-muted/60 rounded-lg text-xs border border-border/70">
+                      <span className="text-muted-foreground text-[11px] font-medium pl-1">Demo login:</span>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("email", "admin@supersync.edu")
+                            setValue("password", "password123")
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                        >
+                          Admin
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("email", "supervisor@supersync.edu")
+                            setValue("password", "password123")
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-background hover:bg-muted text-foreground border shadow-xs transition-colors"
+                        >
+                          Supervisor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("email", "student@supersync.edu")
+                            setValue("password", "password123")
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-background hover:bg-muted text-foreground border shadow-xs transition-colors"
+                        >
+                          Student
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="grid gap-2">
                       <Label htmlFor="email" className="font-semibold">Admin Email</Label>
                       <Input
@@ -195,19 +243,31 @@ export default function AdminLoginPage() {
                   </div>
                 </form>
 
-                
-
               </div>
             </div>
-            <div className="flex items-center p-8 pt-0 justify-center mt-4">
-              <p className="text-center text-sm text-muted-foreground mt-4">
+            <div className="flex flex-col items-center p-8 pt-0 justify-center space-y-3">
+              <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground border-t border-border/50 pt-3 w-full">
+                <Link
+                  href="/login"
+                  className="hover:text-primary transition-colors hover:underline"
+                >
+                  Student Login
+                </Link>
+                <span>&bull;</span>
+                <Link
+                  href="/supervisor-login"
+                  className="hover:text-primary transition-colors hover:underline"
+                >
+                  Supervisor Portal
+                </Link>
+                <span>&bull;</span>
                 <Link
                   href="/"
-                  className="font-semibold text-muted-foreground hover:text-primary underline underline-offset-4"
+                  className="hover:text-primary transition-colors hover:underline"
                 >
-                  Return to Home
+                  Home
                 </Link>
-              </p>
+              </div>
             </div>
           </div>
         </div>

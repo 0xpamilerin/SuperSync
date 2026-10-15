@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { getNavItems, UserRole } from "@/lib/navigation"
+import { getNavItems, type UserRole } from "@/lib/navigation"
 import { 
   LayoutDashboard, FileText, BookOpen, TrendingUp, ChevronLeft, ChevronRight, GraduationCap,
   User, Lightbulb, MessageSquare, Calendar, Folder, Bell, Users, FileCheck, BookCheck, BarChart, 

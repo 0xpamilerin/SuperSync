@@ -2,7 +2,6 @@
 
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import bcrypt from "bcryptjs"
 import { auth } from "@/auth"
 
 const DEFAULT_PASSWORD = "password123"
@@ -51,7 +50,7 @@ export async function uploadStudentsCSV(csvData: string) {
   try {
     const lines = csvData.split("\n").map(l => l.trim()).filter(l => l.length > 0)
     let processed = 0
-    let errors: string[] = []
+    const errors: string[] = []
 
     // Assuming first line is header
     for (let i = 1; i < lines.length; i++) {
@@ -75,13 +74,11 @@ export async function uploadStudentsCSV(csvData: string) {
           continue
         }
 
-        const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10)
-
         await prisma.user.create({
           data: {
             name,
             email,
-            password: hashedPassword,
+            password: DEFAULT_PASSWORD,
             role: "STUDENT",
             studentProfile: {
               create: {
@@ -108,7 +105,7 @@ export async function uploadSupervisorsCSV(csvData: string) {
   try {
     const lines = csvData.split("\n").map(l => l.trim()).filter(l => l.length > 0)
     let processed = 0
-    let errors: string[] = []
+    const errors: string[] = []
 
     // Assuming first line is header
     for (let i = 1; i < lines.length; i++) {
@@ -134,13 +131,11 @@ export async function uploadSupervisorsCSV(csvData: string) {
 
         const maxLoad = maxLoadStr ? parseInt(maxLoadStr, 10) : 5
 
-        const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10)
-
         await prisma.user.create({
           data: {
             name,
             email,
-            password: hashedPassword,
+            password: DEFAULT_PASSWORD,
             role: "SUPERVISOR",
             supervisorProfile: {
               create: {
@@ -197,16 +192,19 @@ export async function getAssignmentData() {
   return { assignments, unassignedStudents, supervisors }
 }
 
+import { createNotification } from "@/app/actions/notifications"
+
 export async function autoAssignStudents(departmentAware: boolean) {
   try {
     const unassignedStudents = await prisma.studentProfile.findMany({
       where: { supervisorId: null },
-      include: { department: true }
+      include: { department: true, user: true }
     })
 
     const supervisors = await prisma.supervisorProfile.findMany({
       include: {
         department: true,
+        user: true,
         _count: {
           select: { assignedStudents: true }
         }
@@ -237,6 +235,25 @@ export async function autoAssignStudents(departmentAware: boolean) {
 
         supervisor._count.assignedStudents++
         assignedCount++
+
+        if (student.userId) {
+          await createNotification({
+            userId: student.userId,
+            title: "Supervisor Assigned",
+            message: `You have been assigned to supervisor ${supervisor.user.name}.`,
+            type: "SYSTEM",
+            link: "/student"
+          })
+        }
+        if (supervisor.userId) {
+          await createNotification({
+            userId: supervisor.userId,
+            title: "New Student Assigned",
+            message: `Student ${student.user.name} has been assigned to your supervision.`,
+            type: "SYSTEM",
+            link: "/supervisor"
+          })
+        }
       }
     }
 
@@ -249,10 +266,37 @@ export async function autoAssignStudents(departmentAware: boolean) {
 
 export async function manualAssignStudent(studentProfileId: string, supervisorProfileId: string) {
   try {
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentProfileId },
+      include: { user: true }
+    })
+    const supervisor = await prisma.supervisorProfile.findUnique({
+      where: { id: supervisorProfileId },
+      include: { user: true }
+    })
+
     await prisma.studentProfile.update({
       where: { id: studentProfileId },
       data: { supervisorId: supervisorProfileId }
     })
+
+    if (student && supervisor) {
+      await createNotification({
+        userId: student.userId,
+        title: "Supervisor Assigned",
+        message: `You have been assigned to supervisor ${supervisor.user.name}.`,
+        type: "SYSTEM",
+        link: "/student"
+      })
+      await createNotification({
+        userId: supervisor.userId,
+        title: "New Student Assigned",
+        message: `Student ${student.user.name} has been assigned to your supervision.`,
+        type: "SYSTEM",
+        link: "/supervisor"
+      })
+    }
+
     revalidatePath("/admin/assignments")
     return { success: true }
   } catch (error: any) {
@@ -262,13 +306,259 @@ export async function manualAssignStudent(studentProfileId: string, supervisorPr
 
 export async function unassignStudent(studentProfileId: string) {
   try {
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentProfileId },
+      include: { user: true, supervisor: { include: { user: true } } }
+    })
+
     await prisma.studentProfile.update({
       where: { id: studentProfileId },
       data: { supervisorId: null }
     })
+
+    if (student) {
+      await createNotification({
+        userId: student.userId,
+        title: "Supervisor Unassigned",
+        message: "Your supervisor allocation has been reset by the department administrator.",
+        type: "SYSTEM",
+        link: "/student"
+      })
+      if (student.supervisor) {
+        await createNotification({
+          userId: student.supervisor.userId,
+          title: "Student Unassigned",
+          message: `Student ${student.user.name} is no longer assigned to you.`,
+          type: "SYSTEM",
+          link: "/supervisor"
+        })
+      }
+    }
+
     revalidatePath("/admin/assignments")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
   }
 }
+
+export async function createSession(data: { title: string; startDate: Date; endDate: Date; isActive?: boolean }) {
+  try {
+    const sessionAuth = await auth()
+    if (!sessionAuth || sessionAuth.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+
+    if (data.isActive) {
+      await prisma.session.updateMany({
+        where: { isActive: true },
+        data: { isActive: false }
+      })
+    }
+
+    const newSession = await prisma.session.create({
+      data: {
+        title: data.title,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+        isActive: data.isActive ?? false
+      }
+    })
+
+    revalidatePath("/admin/sessions")
+    return { success: true, session: newSession }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function setActiveSession(sessionId: string) {
+  try {
+    const sessionAuth = await auth()
+    if (!sessionAuth || sessionAuth.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+
+    await prisma.session.updateMany({
+      where: { isActive: true },
+      data: { isActive: false }
+    })
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { isActive: true }
+    })
+
+    revalidatePath("/admin/sessions")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function archiveSession(sessionId: string) {
+  try {
+    const sessionAuth = await auth()
+    if (!sessionAuth || sessionAuth.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { isActive: false }
+    })
+
+    revalidatePath("/admin/sessions")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function getDepartments() {
+  const session = await auth()
+  if (!session || session.user?.role !== "ADMIN") return []
+  return prisma.department.findMany({
+    include: {
+      _count: {
+        select: {
+          students: true,
+          supervisors: true
+        }
+      }
+    },
+    orderBy: { name: 'asc' }
+  })
+}
+
+export async function createDepartment(name: string, code: string) {
+  try {
+    const session = await auth()
+    if (!session || session.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+
+    const dept = await prisma.department.create({
+      data: { name: name.trim(), code: code.trim().toUpperCase() }
+    })
+    revalidatePath("/admin/departments")
+    return { success: true, department: dept }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function deleteDepartment(id: string) {
+  try {
+    const session = await auth()
+    if (!session || session.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+
+    // Check if department has associated students or supervisors
+    const dept = await prisma.department.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { students: true, supervisors: true }
+        }
+      }
+    })
+
+    if (!dept) return { success: false, error: "Department not found" }
+    if (dept._count.students > 0 || dept._count.supervisors > 0) {
+      return { 
+        success: false, 
+        error: `Cannot delete department with active students (${dept._count.students}) or supervisors (${dept._count.supervisors})` 
+      }
+    }
+
+    await prisma.department.delete({
+      where: { id }
+    })
+    revalidatePath("/admin/departments")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function getReportsData() {
+  const session = await auth()
+  if (!session || session.user?.role !== "ADMIN") return null
+
+  const [
+    totalStudents,
+    totalSupervisors,
+    totalTopics,
+    topicsApproved,
+    topicsPending,
+    totalChapters,
+    chaptersApproved,
+    chaptersPending,
+    departments,
+    supervisorsWithCount
+  ] = await Promise.all([
+    prisma.studentProfile.count(),
+    prisma.supervisorProfile.count(),
+    prisma.topic.count(),
+    prisma.topic.count({ where: { status: "APPROVED" } }),
+    prisma.topic.count({ where: { status: "PENDING" } }),
+    prisma.chapter.count(),
+    prisma.chapter.count({ where: { status: "APPROVED" } }),
+    prisma.chapter.count({ where: { status: "PENDING" } }),
+    prisma.department.findMany({
+      include: {
+        _count: {
+          select: {
+            students: true,
+            supervisors: true
+          }
+        }
+      }
+    }),
+    prisma.supervisorProfile.findMany({
+      include: {
+        user: true,
+        department: true,
+        _count: {
+          select: { assignedStudents: true }
+        }
+      }
+    })
+  ])
+
+  return {
+    overview: {
+      totalStudents,
+      totalSupervisors,
+      totalTopics,
+      topicsApproved,
+      topicsPending,
+      totalChapters,
+      chaptersApproved,
+      chaptersPending
+    },
+    departments,
+    supervisors: supervisorsWithCount
+  }
+}
+
+export async function getSystemSettings() {
+  const settings = await prisma.systemSetting.findMany()
+  const map: Record<string, string> = {}
+  for (const s of settings) {
+    map[s.key] = s.value
+  }
+  return map
+}
+
+export async function updateSystemSettings(settings: Record<string, string>) {
+  try {
+    const session = await auth()
+    if (!session || session.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" }
+
+    for (const [key, value] of Object.entries(settings)) {
+      await prisma.systemSetting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value }
+      })
+    }
+    revalidatePath("/admin/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+

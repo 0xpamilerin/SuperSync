@@ -53,9 +53,9 @@ const COLORS = ['#F59E0B', '#0EA5E9', '#4F46E5', '#10B981', '#14b8a6']
 export function AdminDashboardClient({ data }: { data: any }) {
   const { stats, supervisors, recentRegistrations, activeSession } = data
 
-  const supervisorWorkloadData = supervisors.map((s: any) => ({
-    name: s.user.name.split(' ')[0],
-    students: s.assignedStudents.length
+  const supervisorWorkloadData = (supervisors || []).map((s: any) => ({
+    name: s.user?.name ? s.user.name.split(' ')[0] : 'Staff',
+    students: s.assignedStudents?.length ?? 0
   }))
 
   return (

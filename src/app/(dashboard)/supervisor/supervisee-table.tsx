@@ -1,13 +1,15 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { 
   CheckCircle,
   XCircle,
   MessageSquare,
   Download,
   Search,
-  Filter
+  Filter,
+  Eye
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -133,34 +135,47 @@ export function SuperviseeTable({ students }: { students: any[] }) {
                     <TableCell>{getStatusBadge(student.status)}</TableCell>
                     <TableCell className="text-muted-foreground">{student.lastActivity}</TableCell>
                     <TableCell className="text-right">
-                      <TooltipProvider>
-                        <div className="flex justify-end gap-2">
-                          <Tooltip>
-                            <TooltipTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8 text-secondary hover:text-secondary" })}>
-                                <CheckCircle className="h-4 w-4" />
-                            </TooltipTrigger>
-                            <TooltipContent>Approve</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8 text-destructive hover:text-destructive" })}>
-                                <XCircle className="h-4 w-4" />
-                            </TooltipTrigger>
-                            <TooltipContent>Reject / Request Changes</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8" })}>
-                                <MessageSquare className="h-4 w-4" />
-                            </TooltipTrigger>
-                            <TooltipContent>Comment</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8" })}>
-                                <Download className="h-4 w-4" />
-                            </TooltipTrigger>
-                            <TooltipContent>Download Submission</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TooltipProvider>
+                      <div className="flex justify-end items-center gap-1.5">
+                        <Link 
+                          href={`/supervisor/students/${student.id}`} 
+                          className={buttonVariants({ variant: "ghost", size: "sm", className: "h-8 px-2.5 text-xs font-medium" })}
+                          title="View student dossier"
+                        >
+                          <Eye className="h-3.5 w-3.5 mr-1" />
+                          Dossier
+                        </Link>
+                        {student.chapterId ? (
+                          <Link 
+                            href={`/chapters/${student.chapterId}`} 
+                            className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 px-2.5 text-xs font-medium" })}
+                            title="Review latest chapter"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                            Review
+                          </Link>
+                        ) : student.status === "pending_topic" ? (
+                          <Link 
+                            href="/supervisor/topics" 
+                            className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 px-2.5 text-xs font-medium text-warning border-warning" })}
+                            title="Review pending topic"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            Review Topic
+                          </Link>
+                        ) : null}
+                        {student.fileUrl && (
+                          <a 
+                            href={student.fileUrl} 
+                            download={student.fileName || "submission"} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8" })}
+                            title="Download submission"
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -201,16 +216,41 @@ export function SuperviseeTable({ students }: { students: any[] }) {
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Current Stage</p>
                     <p className="text-sm font-medium">{student.currentChapter}</p>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-secondary">
-                      <CheckCircle className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                      <XCircle className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Link 
+                      href={`/supervisor/students/${student.id}`} 
+                      className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 text-xs font-medium" })}
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                      Dossier
+                    </Link>
+                    {student.chapterId ? (
+                      <Link 
+                        href={`/chapters/${student.chapterId}`} 
+                        className={buttonVariants({ variant: "default", size: "sm", className: "h-8 text-xs font-medium" })}
+                      >
+                        Review
+                      </Link>
+                    ) : student.status === "pending_topic" ? (
+                      <Link 
+                        href="/supervisor/topics" 
+                        className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 text-xs font-medium text-warning border-warning" })}
+                      >
+                        Topic
+                      </Link>
+                    ) : null}
+                    {student.fileUrl && (
+                      <a 
+                        href={student.fileUrl} 
+                        download={student.fileName || "submission"} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className={buttonVariants({ variant: "ghost", size: "icon", className: "h-8 w-8" })}
+                        title="Download submission"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

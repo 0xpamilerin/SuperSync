@@ -5,13 +5,18 @@ import { getChapterById } from "@/app/actions/chapters"
 import { ChapterReviewClient } from "./ChapterReviewClient"
 import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
-export default async function ChapterReviewPage({ params }: { params: { id: string } }) {
+export default async function ChapterReviewPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string } 
+}) {
   const session = await auth()
   if (!session?.user) {
     redirect("/login")
   }
 
-  const chapter = await getChapterById(params.id)
+  const { id } = await Promise.resolve(params)
+  const chapter = await getChapterById(id)
   if (!chapter) {
     notFound()
   }
@@ -24,7 +29,7 @@ export default async function ChapterReviewPage({ params }: { params: { id: stri
     }
   } else if (session.user.role === "SUPERVISOR") {
     const supervisorProfile = await resolveSupervisorProfile(session)
-    if (supervisorProfile?.id !== chapter.student.supervisorId) {
+    if (supervisorProfile?.id !== chapter.student?.supervisorId) {
       redirect("/supervisor")
     }
   } else if (session.user.role !== "ADMIN") {

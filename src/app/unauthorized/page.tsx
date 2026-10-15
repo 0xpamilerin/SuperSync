@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
 export default function UnauthorizedPage() {

@@ -13,10 +13,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { getAssignmentData, autoAssignStudents, manualAssignStudent, unassignStudent } from "@/app/actions/admin"
+import { toast } from "@/hooks/use-toast"
 
 export default function AssignmentsPage() {
   const [isDepartmentAware, setIsDepartmentAware] = React.useState(true)
   const [isShuffling, setIsShuffling] = React.useState(false)
+  const [searchQuery, setSearchQuery] = React.useState("")
   
   const [manualStudent, setManualStudent] = React.useState("")
   const [manualSupervisor, setManualSupervisor] = React.useState("")
@@ -39,14 +41,31 @@ export default function AssignmentsPage() {
     fetchData()
   }, [])
 
+  const filteredAssignments = assignments.filter((a) => {
+    const name = a.user?.name || ""
+    const matric = a.matricNumber || ""
+    const dept = a.department?.name || ""
+    const supName = a.supervisor?.user?.name || ""
+    const q = searchQuery.toLowerCase()
+    return name.toLowerCase().includes(q) || matric.toLowerCase().includes(q) || dept.toLowerCase().includes(q) || supName.toLowerCase().includes(q)
+  })
+
   const handleShuffleAndConfirm = async () => {
     setIsShuffling(true)
     const result = await autoAssignStudents(isDepartmentAware)
     if (result.success) {
-      alert(`Successfully assigned ${result.assignedCount} students!`)
+      toast({
+        title: "Auto-Assignment Complete",
+        description: `Successfully assigned ${result.assignedCount} students.`,
+        type: "success"
+      })
       await fetchData()
     } else {
-      alert(`Failed to assign: ${result.error}`)
+      toast({
+        title: "Assignment Failed",
+        description: result.error || "Failed to auto-assign students",
+        variant: "destructive"
+      })
     }
     setIsShuffling(false)
   }
@@ -55,12 +74,20 @@ export default function AssignmentsPage() {
     if (manualStudent && manualSupervisor) {
       const result = await manualAssignStudent(manualStudent, manualSupervisor)
       if (result.success) {
-        alert(`Successfully assigned student.`)
+        toast({
+          title: "Student Assigned",
+          description: "Student has been assigned to supervisor.",
+          type: "success"
+        })
         setManualStudent("")
         setManualSupervisor("")
         await fetchData()
       } else {
-        alert(`Failed to assign: ${result.error}`)
+        toast({
+          title: "Assignment Failed",
+          description: result.error || "Failed to assign student",
+          variant: "destructive"
+        })
       }
     }
   }
@@ -68,9 +95,18 @@ export default function AssignmentsPage() {
   const handleUnassign = async (studentProfileId: string) => {
     const result = await unassignStudent(studentProfileId)
     if (result.success) {
+      toast({
+        title: "Student Unassigned",
+        description: "Student unassigned successfully.",
+        type: "success"
+      })
       await fetchData()
     } else {
-      alert(`Failed to unassign: ${result.error}`)
+      toast({
+        title: "Unassign Failed",
+        description: result.error || "Failed to unassign student",
+        variant: "destructive"
+      })
     }
   }
 
@@ -103,7 +139,12 @@ export default function AssignmentsPage() {
               </div>
               <div className="relative w-64">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search students..." className="pl-8" />
+                <Input 
+                  placeholder="Search students or supervisor..." 
+                  className="pl-8" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </CardHeader>
             <CardContent>
@@ -118,7 +159,7 @@ export default function AssignmentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assignments.map((assignment) => (
+                  {filteredAssignments.map((assignment) => (
                     <TableRow key={assignment.id}>
                       <TableCell className="font-medium">{assignment.user.name}</TableCell>
                       <TableCell>{assignment.matricNumber}</TableCell>
@@ -134,7 +175,7 @@ export default function AssignmentsPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {assignments.length === 0 && (
+                  {filteredAssignments.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No assignments found.</TableCell>
                     </TableRow>

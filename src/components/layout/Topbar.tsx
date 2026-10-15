@@ -16,11 +16,25 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { getUnreadNotificationCount } from "@/app/actions/notifications"
 
 export function Topbar({ onToggleMobileMenu }: { onToggleMobileMenu?: () => void } = {}) {
   const { data: session } = useSession()
   const user = session?.user
+  const pathname = usePathname()
+  const [unreadCount, setUnreadCount] = React.useState(0)
+
+  React.useEffect(() => {
+    let isMounted = true
+    getUnreadNotificationCount().then((count) => {
+      if (isMounted) setUnreadCount(count)
+    }).catch(() => {})
+    return () => {
+      isMounted = false
+    }
+  }, [pathname])
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
@@ -48,7 +62,9 @@ export function Topbar({ onToggleMobileMenu }: { onToggleMobileMenu?: () => void
 
           <Link href="/notifications" className={buttonVariants({ variant: "ghost", size: "icon", className: "relative" })}>
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-primary" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
               <span className="sr-only">Notifications</span>
           </Link>
 

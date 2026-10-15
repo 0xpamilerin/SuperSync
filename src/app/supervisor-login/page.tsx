@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { signIn } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Eye, EyeOff, Building, Loader2 } from "lucide-react"
@@ -40,8 +40,8 @@ export default function SupervisorLoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "supervisor@supersync.edu",
+      password: "password123",
       rememberMe: false,
     },
   })
@@ -59,13 +59,25 @@ export default function SupervisorLoginPage() {
 
       if (result?.error) {
         setError("Invalid email or password")
-      } else {
-        router.push("/")
-        router.refresh()
+        setIsLoading(false)
+        return
       }
-    } catch (err) {
+
+      const session = await getSession()
+      const role = session?.user?.role?.toUpperCase()
+
+      if (role === "SUPERVISOR") {
+        router.push("/supervisor")
+      } else if (role === "ADMIN") {
+        router.push("/admin")
+      } else if (role === "STUDENT") {
+        router.push("/student")
+      } else {
+        router.push("/supervisor")
+      }
+      router.refresh()
+    } catch {
       setError("An unexpected error occurred. Please try again.")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -119,6 +131,42 @@ export default function SupervisorLoginPage() {
               <div className="grid gap-6">
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <div className="grid gap-4">
+                    <div className="flex items-center justify-between gap-1 p-1.5 bg-muted/60 rounded-lg text-xs border border-border/70">
+                      <span className="text-muted-foreground text-[11px] font-medium pl-1">Demo login:</span>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("email", "supervisor@supersync.edu")
+                            setValue("password", "password123")
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#4F46E5] text-white hover:bg-[#4338CA] transition-colors"
+                        >
+                          Supervisor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("email", "student@supersync.edu")
+                            setValue("password", "password123")
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-background hover:bg-muted text-foreground border shadow-xs transition-colors"
+                        >
+                          Student
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("email", "admin@supersync.edu")
+                            setValue("password", "password123")
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-medium bg-background hover:bg-muted text-foreground border shadow-xs transition-colors"
+                        >
+                          Admin
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="grid gap-2">
                       <Label htmlFor="email" className="font-semibold">Staff Email</Label>
                       <Input
@@ -201,19 +249,41 @@ export default function SupervisorLoginPage() {
                   </div>
                 </form>
 
-                
-
               </div>
             </div>
-            <div className="flex items-center p-8 pt-0 justify-center mt-4">
-              <p className="text-center text-sm text-muted-foreground mt-4">
+            <div className="flex flex-col items-center p-8 pt-0 justify-center space-y-3">
+              <div className="text-center text-xs text-muted-foreground">
+                New supervisor?{" "}
+                <Link
+                  href="/supervisor-register"
+                  className="font-medium text-[#4F46E5] hover:underline"
+                >
+                  Register staff account
+                </Link>
+              </div>
+
+              <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground border-t border-border/50 pt-3 w-full">
+                <Link
+                  href="/login"
+                  className="hover:text-primary transition-colors hover:underline"
+                >
+                  Student Login
+                </Link>
+                <span>&bull;</span>
+                <Link
+                  href="/admin-login"
+                  className="hover:text-primary transition-colors hover:underline"
+                >
+                  Admin Portal
+                </Link>
+                <span>&bull;</span>
                 <Link
                   href="/"
-                  className="font-semibold text-muted-foreground hover:text-primary underline underline-offset-4"
+                  className="hover:text-primary transition-colors hover:underline"
                 >
-                  Return to Home
+                  Home
                 </Link>
-              </p>
+              </div>
             </div>
           </div>
         </div>

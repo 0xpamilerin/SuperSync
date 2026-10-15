@@ -8,12 +8,17 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getSupervisorDashboardData } from "@/app/actions/dashboard"
+import { getAnnouncements } from "@/app/actions/announcements"
+import { AnnouncementsFeed } from "@/components/dashboard/AnnouncementsFeed"
 import { redirect } from "next/navigation"
 import { SuperviseeTable } from "./supervisee-table"
 import prisma from "@/lib/db"
 
 export default async function SupervisorDashboard() {
-  const data = await getSupervisorDashboardData()
+  const [data, announcements] = await Promise.all([
+    getSupervisorDashboardData(),
+    getAnnouncements()
+  ])
   if (!data) {
     redirect("/login")
   }
@@ -62,7 +67,11 @@ export default async function SupervisorDashboard() {
       id: student.id,
       name: student.user.name,
       topic: currentTopic?.title || "No Topic Selected",
+      topicId: currentTopic?.id,
       currentChapter: currentStage,
+      chapterId: latestChapter?.id,
+      fileUrl: latestChapter?.fileUrl,
+      fileName: latestChapter?.fileName,
       status: status,
       lastActivity: new Date(currentTopic?.createdAt || latestChapter?.submittedAt || student.user.createdAt).toLocaleDateString()
     }
@@ -76,6 +85,9 @@ export default async function SupervisorDashboard() {
           Manage your supervisees and review their project progress.
         </p>
       </div>
+
+      {/* Announcements */}
+      <AnnouncementsFeed announcements={announcements} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
-import { getNavItems, UserRole } from "@/lib/navigation"
+import { getNavItems, type UserRole } from "@/lib/navigation"
 import { 
   LayoutDashboard, FileText, BookOpen, TrendingUp, Bell, User,
   Lightbulb, MessageSquare, Calendar, Folder, Users, FileCheck, 

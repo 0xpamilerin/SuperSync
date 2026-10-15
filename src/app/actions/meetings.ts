@@ -3,8 +3,10 @@
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
-import { MeetingStatus } from "../../../generated/prisma/client"
+import { MeetingStatus } from "@/types/models"
 import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
+
+import { createNotification } from "@/app/actions/notifications"
 
 export async function scheduleMeeting(studentId: string, date: Date, agenda: string) {
   try {
@@ -19,6 +21,11 @@ export async function scheduleMeeting(studentId: string, date: Date, agenda: str
       return { success: false, error: "Supervisor profile not found" }
     }
 
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentId },
+      select: { userId: true }
+    })
+
     await prisma.meeting.create({
       data: {
         supervisorId: supervisorProfile.id,
@@ -28,6 +35,22 @@ export async function scheduleMeeting(studentId: string, date: Date, agenda: str
         status: "SCHEDULED"
       }
     })
+
+    if (student) {
+      const formattedDate = new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+      await createNotification({
+        userId: student.userId,
+        title: "New Meeting Scheduled",
+        message: `Your supervisor scheduled a meeting for ${formattedDate}. Agenda: ${agenda}`,
+        type: "MEETING",
+        link: "/student/meetings"
+      })
+    }
 
     revalidatePath("/supervisor/meetings")
     return { success: true }
@@ -81,6 +104,14 @@ export async function updateMeetingStatus(meetingId: string, status: MeetingStat
       return { success: false, error: "Unauthorized" }
     }
 
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: meetingId },
+      include: {
+        student: { include: { user: true } },
+        supervisor: { include: { user: true } }
+      }
+    })
+
     await prisma.meeting.update({
       where: { id: meetingId },
       data: {
@@ -88,6 +119,21 @@ export async function updateMeetingStatus(meetingId: string, status: MeetingStat
         ...(notes !== undefined && { notes })
       }
     })
+
+    if (meeting) {
+      const isSupervisor = session.user.role === "SUPERVISOR"
+      const recipientId = isSupervisor ? meeting.student.userId : meeting.supervisor.userId
+      const link = isSupervisor ? "/student/meetings" : "/supervisor/meetings"
+      const statusText = status.toLowerCase()
+
+      await createNotification({
+        userId: recipientId,
+        title: "Meeting Status Updated",
+        message: `Meeting on ${new Date(meeting.date).toLocaleDateString()} has been marked as ${statusText}.${notes ? ` Notes: ${notes}` : ""}`,
+        type: "MEETING",
+        link
+      })
+    }
 
     revalidatePath("/supervisor/meetings")
     revalidatePath("/student/meetings")

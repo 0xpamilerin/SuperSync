@@ -121,7 +121,7 @@ export function SupervisorMeetingsClient({ meetings, students }: { meetings: any
                     <Badge variant="outline" className="bg-primary/5">{meeting.status}</Badge>
                   </div>
                   <CardTitle className="text-lg mt-2">{meeting.agenda}</CardTitle>
-                  <CardDescription>with {meeting.student.user.name}</CardDescription>
+                  <CardDescription>with {meeting.student?.user?.name || "Student"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-1 text-sm">
                   <div className="flex items-center text-muted-foreground">
@@ -160,7 +160,7 @@ export function SupervisorMeetingsClient({ meetings, students }: { meetings: any
                     <Badge variant="secondary">{meeting.status}</Badge>
                   </div>
                   <CardTitle className="text-lg mt-2 text-muted-foreground">{meeting.agenda}</CardTitle>
-                  <CardDescription>with {meeting.student.user.name}</CardDescription>
+                  <CardDescription>with {meeting.student?.user?.name || "Student"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <div className="flex items-center text-muted-foreground">

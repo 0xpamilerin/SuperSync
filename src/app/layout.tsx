@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   description: "SuperSync: Web-Based Student Project Management System",
 };
 
+import { DemoRoleSwitcher } from "@/components/DemoRoleSwitcher";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,6 +34,7 @@ export default function RootLayout({
           <TooltipProvider>
             <Providers>
               {children}
+              <DemoRoleSwitcher />
             </Providers>
             <Toaster />
           </TooltipProvider>

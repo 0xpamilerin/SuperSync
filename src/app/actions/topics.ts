@@ -3,8 +3,10 @@
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
-import { TopicStatus } from "../../../generated/prisma/client"
+import { TopicStatus } from "@/types/models"
 import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
+
+import { createNotification } from "@/app/actions/notifications"
 
 export async function submitTopic(data: { title: string; description: string }) {
   try {
@@ -19,7 +21,7 @@ export async function submitTopic(data: { title: string; description: string }) 
       return { success: false, error: "Student profile not found" }
     }
 
-    await prisma.topic.create({
+    const newTopic = await prisma.topic.create({
       data: {
         studentId: studentProfile.id,
         title: data.title,
@@ -28,8 +30,18 @@ export async function submitTopic(data: { title: string; description: string }) 
       }
     })
 
+    if (studentProfile.supervisor?.userId) {
+      await createNotification({
+        userId: studentProfile.supervisor.userId,
+        title: "New Project Topic Submitted",
+        message: `${studentProfile.user.name} submitted a project topic: "${data.title}"`,
+        type: "TOPIC",
+        link: "/supervisor/topics"
+      })
+    }
+
     revalidatePath("/student/topics")
-    return { success: true }
+    return { success: true, topic: newTopic }
   } catch (error: any) {
     return { success: false, error: error.message }
   }
@@ -79,15 +91,29 @@ export async function reviewTopic(topicId: string, status: TopicStatus, reviewNo
       return { success: false, error: "Unauthorized" }
     }
 
-    await prisma.topic.update({
+    const updatedTopic = await prisma.topic.update({
       where: { id: topicId },
       data: {
         status,
         supervisorReview: reviewNotes
+      },
+      include: {
+        student: { include: { user: true } }
       }
     })
 
+    if (updatedTopic.student?.user?.id) {
+      await createNotification({
+        userId: updatedTopic.student.user.id,
+        title: `Topic ${status === "APPROVED" ? "Approved" : status === "REJECTED" ? "Rejected" : "Changes Requested"}`,
+        message: `Your supervisor reviewed your topic "${updatedTopic.title}": ${reviewNotes || status}`,
+        type: "TOPIC",
+        link: "/student/topics"
+      })
+    }
+
     revalidatePath("/supervisor/topics")
+    revalidatePath("/student/topics")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }

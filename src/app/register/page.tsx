@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/db";
 import RegisterClient from "./RegisterClient";
 
-export default async function RegisterPage({ searchParams }: { searchParams: { role?: string } }) {
+export default async function RegisterPage() {
   const session = await auth();
 
   // If already logged in, redirect to home

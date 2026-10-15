@@ -10,7 +10,7 @@ import { MobileNav } from "./MobileNav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { getNavItems, UserRole } from "@/lib/navigation"
+import { getNavItems, type UserRole } from "@/lib/navigation"
 import { 
   LayoutDashboard, FileText, BookOpen, TrendingUp, Bell, User,
   Lightbulb, MessageSquare, Calendar, Folder, Users, FileCheck, 

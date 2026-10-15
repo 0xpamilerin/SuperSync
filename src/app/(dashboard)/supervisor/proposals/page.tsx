@@ -10,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { getSupervisorProposals, reviewProposal } from "@/app/actions/proposals"
+import { toast } from "@/hooks/use-toast"
 
 export default function SupervisorProposalsPage() {
   const [proposals, setProposals] = React.useState<any[]>([])
+  const [searchQuery, setSearchQuery] = React.useState("")
   const [loading, setLoading] = React.useState(true)
   const [selectedProposal, setSelectedProposal] = React.useState<any | null>(null)
   const [reviewNotes, setReviewNotes] = React.useState("")
@@ -35,22 +37,38 @@ export default function SupervisorProposalsPage() {
     fetchProposals()
   }, [])
 
+  const filteredProposals = proposals.filter((p) => {
+    const studentName = p.student?.user?.name || ""
+    const title = p.title || ""
+    const matric = p.student?.matricNumber || ""
+    const q = searchQuery.toLowerCase()
+    return studentName.toLowerCase().includes(q) || title.toLowerCase().includes(q) || matric.toLowerCase().includes(q)
+  })
+
   const handleReview = async (status: "APPROVED" | "REJECTED") => {
     if (!selectedProposal) return
     setIsSubmitting(true)
     const result = await reviewProposal(selectedProposal.id, status, reviewNotes)
     if (result.success) {
-      alert(`Proposal ${status.toLowerCase()} successfully.`)
+      toast({
+        title: status === "APPROVED" ? "Proposal Approved" : "Revision Requested",
+        description: `Proposal marked as ${status.toLowerCase()} successfully.`,
+        type: "success"
+      })
       setReviewNotes("")
       await fetchProposals()
     } else {
-      alert(`Error: ${result.error}`)
+      toast({
+        title: "Review Failed",
+        description: result.error || "An error occurred while submitting review.",
+        variant: "destructive"
+      })
     }
     setIsSubmitting(false)
   }
 
   if (loading) {
-    return <div className="p-8 text-center">Loading proposals...</div>
+    return <div className="p-8 text-center text-muted-foreground">Loading proposals...</div>
   }
 
   return (
@@ -66,12 +84,17 @@ export default function SupervisorProposalsPage() {
             <CardTitle>Queue</CardTitle>
             <div className="relative mt-2">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search students..." className="pl-8" />
+              <Input 
+                placeholder="Search students..." 
+                className="pl-8" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="flex flex-col divide-y max-h-[600px] overflow-y-auto">
-              {proposals.map((proposal) => (
+              {filteredProposals.map((proposal) => (
                 <div 
                   key={proposal.id}
                   className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${selectedProposal?.id === proposal.id ? 'bg-muted' : ''}`}
@@ -89,7 +112,7 @@ export default function SupervisorProposalsPage() {
                   <p className="text-xs text-muted-foreground mt-2">{new Date(proposal.updatedAt).toLocaleDateString()}</p>
                 </div>
               ))}
-              {proposals.length === 0 && (
+              {filteredProposals.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
                   No proposals in queue.
                 </div>
@@ -113,9 +136,9 @@ export default function SupervisorProposalsPage() {
                     >
                       {selectedProposal.status}
                     </Badge>
-                    <Button variant="outline" size="sm" className="h-8">
+                    <Button variant="outline" size="sm" className="h-8" onClick={() => window.print()}>
                       <Download className="w-3.5 h-3.5 mr-2" />
-                      PDF
+                      PDF / Print
                     </Button>
                   </div>
                 </div>

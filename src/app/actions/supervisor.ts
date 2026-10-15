@@ -85,8 +85,8 @@ export async function getSupervisorFeedbackHistory() {
   const feedbackList = [
     ...reviewedTopics.map(t => ({
       id: `topic-${t.id}`,
-      student: t.student.user.name,
-      matric: t.student.matricNumber,
+      student: t.student?.user?.name || "Student",
+      matric: t.student?.matricNumber || "",
       type: "Topic Review",
       target: t.title,
       date: new Date(t.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
@@ -95,18 +95,18 @@ export async function getSupervisorFeedbackHistory() {
     })),
     ...chapterComments.map(c => ({
       id: `comment-${c.id}`,
-      student: c.chapter.student.user.name,
-      matric: c.chapter.student.matricNumber,
+      student: c.chapter?.student?.user?.name || "Student",
+      matric: c.chapter?.student?.matricNumber || "",
       type: "Chapter Review",
-      target: `Chapter ${c.chapter.number}: ${c.chapter.title}`,
+      target: `Chapter ${c.chapter?.number ?? 1}: ${c.chapter?.title || "Document"}`,
       date: new Date(c.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       content: c.content,
-      status: c.chapter.status
+      status: c.chapter?.status || "PENDING"
     })),
     ...meetingNotes.map(m => ({
       id: `meeting-${m.id}`,
-      student: m.student.user.name,
-      matric: m.student.matricNumber,
+      student: m.student?.user?.name || "Student",
+      matric: m.student?.matricNumber || "",
       type: "Meeting Notes",
       target: m.agenda,
       date: new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
@@ -181,8 +181,10 @@ export async function getSupervisorReports() {
 
     // Performance score estimation based on progress and approvals
     const progressScore = Math.min(100, Math.round((approvedCount / 5) * 80 + (s.chapters.length > 0 ? 20 : 0)))
+    const firstName = s.user?.name ? s.user.name.split(" ")[0] : "Student"
+    const matricSuffix = s.matricNumber ? ` (${s.matricNumber.slice(-3)})` : ""
     performanceData.push({
-      name: s.user.name.split(" ")[0] + ` (${s.matricNumber.slice(-3)})`,
+      name: `${firstName}${matricSuffix}`,
       score: progressScore
     })
   }
@@ -200,4 +202,42 @@ export async function getSupervisorReports() {
     performanceData,
     totalStudents: students.length
   }
+}
+
+export async function getStudentDetailsForSupervisor(studentProfileId: string) {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "SUPERVISOR") {
+    return null
+  }
+
+  const supervisorProfile = await resolveSupervisorProfile(session)
+  if (!supervisorProfile) return null
+
+  const student = await prisma.studentProfile.findFirst({
+    where: {
+      id: studentProfileId,
+      supervisorId: supervisorProfile.id
+    },
+    include: {
+      user: true,
+      department: true,
+      topics: {
+        orderBy: { createdAt: 'desc' }
+      },
+      chapters: {
+        include: {
+          comments: {
+            orderBy: { createdAt: 'desc' }
+          }
+        },
+        orderBy: { number: 'asc' }
+      },
+      meetings: {
+        where: { supervisorId: supervisorProfile.id },
+        orderBy: { date: 'desc' }
+      }
+    }
+  })
+
+  return student
 }

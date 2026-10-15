@@ -12,10 +12,25 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
 import { reviewTopic } from "@/app/actions/topics"
 
+import { useRouter } from "next/navigation"
+
 export function SupervisorTopicsClient({ topics }: { topics: any[] }) {
+  const router = useRouter()
   const [selectedTopic, setSelectedTopic] = React.useState<any | null>(null)
   const [feedback, setFeedback] = React.useState("")
+  const [searchQuery, setSearchQuery] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+
+  const filteredTopics = React.useMemo(() => {
+    if (!searchQuery.trim()) return topics
+    const q = searchQuery.toLowerCase()
+    return topics.filter((t) => {
+      const studentName = t.student?.user?.name?.toLowerCase() || ""
+      const matric = t.student?.matricNumber?.toLowerCase() || ""
+      const title = t.title?.toLowerCase() || ""
+      return studentName.includes(q) || matric.includes(q) || title.includes(q)
+    })
+  }, [topics, searchQuery])
 
   const handleReview = async (status: "APPROVED" | "REJECTED" | "CHANGES_REQUESTED") => {
     if (!selectedTopic) return
@@ -29,9 +44,9 @@ export function SupervisorTopicsClient({ topics }: { topics: any[] }) {
         description: `Topic has been ${status.toLowerCase()}.`,
         type: "success"
       })
-      // We could update the local state here or let the parent component re-fetch.
-      // Easiest is to reload the page or update local state.
-      window.location.reload()
+      setSelectedTopic((prev: any) => prev ? { ...prev, status, supervisorReview: feedback } : null)
+      router.refresh()
+      setIsSubmitting(false)
     } else {
       toast({
         title: "Error",
@@ -55,12 +70,17 @@ export function SupervisorTopicsClient({ topics }: { topics: any[] }) {
             <CardTitle>Queue</CardTitle>
             <div className="relative mt-2">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search students..." className="pl-8" />
+              <Input
+                placeholder="Search students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-y-auto flex-1">
             <div className="flex flex-col divide-y">
-              {topics.map((topic) => (
+              {filteredTopics.map((topic) => (
                 <div 
                   key={topic.id}
                   className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${selectedTopic?.id === topic.id ? 'bg-muted' : ''}`}
@@ -70,7 +90,7 @@ export function SupervisorTopicsClient({ topics }: { topics: any[] }) {
                   }}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold">{topic.student.user.name}</span>
+                    <span className="font-semibold">{topic.student?.user?.name || "Student"}</span>
                     <Badge variant={topic.status === "PENDING" ? "outline" : (topic.status === "APPROVED" ? "default" : "destructive")}
                            className={topic.status === "PENDING" ? "text-warning border-warning bg-warning/10" : ""}
                     >
@@ -81,9 +101,9 @@ export function SupervisorTopicsClient({ topics }: { topics: any[] }) {
                   <p className="text-xs text-muted-foreground mt-2">{new Date(topic.createdAt).toLocaleDateString()}</p>
                 </div>
               ))}
-              {topics.length === 0 && (
+              {filteredTopics.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
-                  No topics in queue.
+                  {searchQuery ? "No matching topics." : "No topics in queue."}
                 </div>
               )}
             </div>
@@ -97,7 +117,9 @@ export function SupervisorTopicsClient({ topics }: { topics: any[] }) {
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <CardTitle className="text-xl mb-2">{selectedTopic.title}</CardTitle>
-                    <CardDescription>Submitted by {selectedTopic.student.user.name} ({selectedTopic.student.matricNumber}) on {new Date(selectedTopic.createdAt).toLocaleDateString()}</CardDescription>
+                    <CardDescription>
+                      Submitted by {selectedTopic.student?.user?.name || "Student"} {selectedTopic.student?.matricNumber ? `(${selectedTopic.student.matricNumber})` : ""} on {new Date(selectedTopic.createdAt).toLocaleDateString()}
+                    </CardDescription>
                   </div>
                   <Badge variant={selectedTopic.status === "PENDING" ? "outline" : (selectedTopic.status === "APPROVED" ? "default" : "destructive")}
                          className={selectedTopic.status === "PENDING" ? "text-warning border-warning bg-warning/10 text-sm px-3 py-1" : "text-sm px-3 py-1"}

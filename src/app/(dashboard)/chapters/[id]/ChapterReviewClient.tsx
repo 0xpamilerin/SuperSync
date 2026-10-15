@@ -83,7 +83,7 @@ export function ChapterReviewClient({
               {chapter.status}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">Submitted by {chapter.student.user.name} on {new Date(chapter.submittedAt).toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground">Submitted by {chapter.student?.user?.name || "Student"} on {new Date(chapter.submittedAt).toLocaleDateString()}</p>
         </div>
       </div>
 
@@ -99,10 +99,10 @@ export function ChapterReviewClient({
             <CardContent className="p-0">
               <div className="flex flex-col">
                 {comments.map((comment: any) => {
-                  // Determine if the comment was written by supervisor or student based on role?
-                  // We don't have author's role attached directly to comment, but we can compare authorId
-                  const isAuthorSupervisor = comment.authorId !== chapter.student.user.id
-                  const authorName = isAuthorSupervisor ? "Supervisor" : chapter.student.user.name
+                  // Determine if the comment was written by supervisor or student
+                  const studentUserId = chapter.student?.user?.id
+                  const isAuthorSupervisor = studentUserId ? comment.authorId !== studentUserId : true
+                  const authorName = isAuthorSupervisor ? "Supervisor" : (chapter.student?.user?.name || "Student")
                   
                   return (
                     <div key={comment.id} className={cn("p-6 border-b last:border-0", comment.isResolved && "bg-muted/30 opacity-70")}>

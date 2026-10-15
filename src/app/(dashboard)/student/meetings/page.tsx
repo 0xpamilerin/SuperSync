@@ -10,9 +10,10 @@ import { getStudentMeetings } from "@/app/actions/meetings"
 
 export default async function StudentMeetingsPage() {
   const meetings = await getStudentMeetings()
+  const now = new Date().getTime()
   
-  const upcomingMeetings = meetings.filter(m => m.status === "SCHEDULED" || m.date >= new Date())
-  const pastMeetings = meetings.filter(m => m.status === "COMPLETED" || m.status === "CANCELLED" || m.date < new Date())
+  const upcomingMeetings = meetings.filter(m => m.status === "SCHEDULED" || new Date(m.date).getTime() >= now)
+  const pastMeetings = meetings.filter(m => m.status === "COMPLETED" || m.status === "CANCELLED" || new Date(m.date).getTime() < now)
 
   const formatMeetingDate = (date: Date) => {
     return new Date(date).toLocaleString('en-US', {
@@ -49,7 +50,7 @@ export default async function StudentMeetingsPage() {
                     <Badge variant="outline" className="bg-primary/5">{meeting.status}</Badge>
                   </div>
                   <CardTitle className="text-lg mt-2">{meeting.agenda}</CardTitle>
-                  <CardDescription>with {meeting.supervisor.user.name}</CardDescription>
+                  <CardDescription>with {meeting.supervisor?.user?.name || "Supervisor"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-1 text-sm">
                   <div className="flex items-center text-muted-foreground">
@@ -86,7 +87,7 @@ export default async function StudentMeetingsPage() {
                     <Badge variant="secondary">{meeting.status}</Badge>
                   </div>
                   <CardTitle className="text-lg mt-2 text-muted-foreground">{meeting.agenda}</CardTitle>
-                  <CardDescription>with {meeting.supervisor.user.name}</CardDescription>
+                  <CardDescription>with {meeting.supervisor?.user?.name || "Supervisor"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-1 text-sm">
                   <div className="flex items-center text-muted-foreground">

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Users, Calendar, CheckCircle, FileText, GraduationCap, Building, ShieldCheck } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { BookOpen, Users, Calendar, CheckCircle, FileText, GraduationCap, Building } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { Footer } from "@/components/layout/Footer";
 
 export default async function LandingPage() {
   const session = await auth();
@@ -51,7 +52,7 @@ export default async function LandingPage() {
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mb-8">
               A comprehensive platform for university students, supervisors, and administrators to seamlessly track, review, and finalize final year projects.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-12">
               {/* Student Portal Card */}
               <div className="flex flex-col p-6 bg-card rounded-2xl border shadow-sm text-left">
                 <div className="p-3 bg-primary/10 rounded-lg w-fit mb-4 text-primary">
@@ -61,11 +62,11 @@ export default async function LandingPage() {
                 <p className="text-sm text-muted-foreground mb-6 flex-1">
                   Submit topics, upload chapters, and track your project progress.
                 </p>
-                <div className="flex flex-col gap-2">
-                  <Link href="/login" className={buttonVariants({ className: "w-full" })}>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/login" className={buttonVariants({ className: "w-full sm:flex-1" })}>
                     Login
                   </Link>
-                  <Link href="/register" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+                  <Link href="/register" className={buttonVariants({ variant: "outline", className: "w-full sm:flex-1" })}>
                     Create Account
                   </Link>
                 </div>
@@ -80,28 +81,12 @@ export default async function LandingPage() {
                 <p className="text-sm text-muted-foreground mb-6 flex-1">
                   Review student chapters, approve topics, and manage meetings.
                 </p>
-                <div className="flex flex-col gap-2">
-                  <Link href="/supervisor-login" className={buttonVariants({ className: "w-full" })}>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/supervisor-login" className={buttonVariants({ className: "w-full sm:flex-1" })}>
                     Login
                   </Link>
-                  <Link href="/supervisor-register" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+                  <Link href="/supervisor-register" className={buttonVariants({ variant: "outline", className: "w-full sm:flex-1" })}>
                     Create Account
-                  </Link>
-                </div>
-              </div>
-
-              {/* Admin Portal Card */}
-              <div className="flex flex-col p-6 bg-card rounded-2xl border shadow-sm text-left">
-                <div className="p-3 bg-destructive/10 rounded-lg w-fit mb-4 text-destructive">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Administration</h3>
-                <p className="text-sm text-muted-foreground mb-6 flex-1">
-                  Manage sessions, departments, and oversee all system activities.
-                </p>
-                <div className="flex flex-col gap-2">
-                  <Link href="/admin-login" className={buttonVariants({ className: "w-full" })}>
-                    Login
                   </Link>
                 </div>
               </div>
@@ -149,17 +134,7 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer className="w-full border-t py-6 bg-background">
-        <div className="container px-4 md:px-6 mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © 2026 SuperSync. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="#" className="hover:underline">Terms of Service</Link>
-            <Link href="#" className="hover:underline">Privacy Policy</Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

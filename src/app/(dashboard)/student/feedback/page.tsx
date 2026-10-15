@@ -25,6 +25,7 @@ type FeedbackItem = {
 export default function StudentFeedbackPage() {
   const [activeFeedback, setActiveFeedback] = React.useState<string | null>(null)
   const [feedbackList, setFeedbackList] = React.useState<FeedbackItem[]>([])
+  const [searchQuery, setSearchQuery] = React.useState("")
   
   React.useEffect(() => {
     async function loadFeedback() {
@@ -49,8 +50,9 @@ export default function StudentFeedbackPage() {
       chapters.forEach((c: any) => {
         if (c.comments && c.comments.length > 0) {
           c.comments.forEach((comment: any) => {
-            // Include only comments not written by the student
-            if (comment.authorId !== c.studentId) {
+            // Include only comments not written by the student (written by supervisor)
+            const studentUserId = c.student?.userId
+            if (studentUserId ? comment.authorId !== studentUserId : comment.authorId !== c.studentId) {
               items.push({
                 id: `comment-${comment.id}`,
                 type: "Chapter Feedback",
@@ -70,6 +72,17 @@ export default function StudentFeedbackPage() {
     loadFeedback()
   }, [])
 
+  const filteredFeedback = React.useMemo(() => {
+    if (!searchQuery.trim()) return feedbackList
+    const q = searchQuery.toLowerCase()
+    return feedbackList.filter(
+      (item) =>
+        item.target.toLowerCase().includes(q) ||
+        item.content.toLowerCase().includes(q) ||
+        item.type.toLowerCase().includes(q)
+    )
+  }, [feedbackList, searchQuery])
+
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -83,19 +96,22 @@ export default function StudentFeedbackPage() {
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search feedback..." className="pl-8" />
+            <Input
+              placeholder="Search feedback..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
           </div>
-          <Button variant="outline" className="shrink-0">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {feedbackList.length === 0 && (
-              <p className="text-center text-muted-foreground py-8 border border-dashed rounded-md">No feedback found.</p>
+            {filteredFeedback.length === 0 && (
+              <p className="text-center text-muted-foreground py-8 border border-dashed rounded-md">
+                {searchQuery ? "No matching feedback found." : "No feedback found."}
+              </p>
             )}
-            {feedbackList.map((feedback) => (
+            {filteredFeedback.map((feedback) => (
               <Collapsible 
                 key={feedback.id} 
                 className="border rounded-md overflow-hidden"

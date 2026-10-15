@@ -19,6 +19,8 @@ import { ProgressTracker } from "@/components/dashboard/ProgressTracker"
 
 import { auth } from "@/auth"
 import { getStudentDashboardData } from "@/app/actions/dashboard"
+import { getAnnouncements } from "@/app/actions/announcements"
+import { AnnouncementsFeed } from "@/components/dashboard/AnnouncementsFeed"
 import { redirect } from "next/navigation"
 
 export default async function StudentDashboard() {
@@ -27,7 +29,10 @@ export default async function StudentDashboard() {
     redirect("/login")
   }
 
-  const data = await getStudentDashboardData()
+  const [data, announcements] = await Promise.all([
+    getStudentDashboardData(),
+    getAnnouncements()
+  ])
   
   if (!data) {
     return (
@@ -60,6 +65,9 @@ export default async function StudentDashboard() {
           Your current topic: <span className="font-semibold text-foreground">{currentTopic?.title || "No topic assigned yet"}</span>
         </p>
       </div>
+
+      {/* Announcements */}
+      <AnnouncementsFeed announcements={announcements} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { resolveUser } from "@/lib/user-helper"
 
+import { createNotification } from "@/app/actions/notifications"
+
 export async function addComment(chapterId: string, content: string) {
   try {
     const session = await auth()
@@ -17,6 +19,18 @@ export async function addComment(chapterId: string, content: string) {
       return { success: false, error: "User not found" }
     }
 
+    const chapter = await prisma.chapter.findUnique({
+      where: { id: chapterId },
+      include: {
+        student: {
+          include: {
+            user: true,
+            supervisor: { include: { user: true } }
+          }
+        }
+      }
+    })
+
     await prisma.comment.create({
       data: {
         chapterId,
@@ -24,6 +38,25 @@ export async function addComment(chapterId: string, content: string) {
         content
       }
     })
+
+    if (chapter) {
+      const isStudent = resolvedUser.id === chapter.student.user.id
+      const recipientUserId = isStudent 
+        ? chapter.student.supervisor?.userId 
+        : chapter.student.user.id
+
+      if (recipientUserId) {
+        await createNotification({
+          userId: recipientUserId,
+          title: isStudent 
+            ? `New Reply from ${resolvedUser.name}` 
+            : `Feedback on Chapter ${chapter.number}`,
+          message: `${resolvedUser.name}: "${content.length > 80 ? content.slice(0, 77) + '...' : content}"`,
+          type: "CHAPTER",
+          link: `/chapters/${chapterId}`
+        })
+      }
+    }
 
     revalidatePath(`/chapters/${chapterId}`)
     return { success: true }

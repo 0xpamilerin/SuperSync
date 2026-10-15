@@ -1,8 +1,22 @@
-export default function AdminReportsPage() {
-  return (
-    <div className="flex flex-col gap-4 p-8">
-      <h1 className="text-2xl font-bold capitalize">reports</h1>
-      <p className="text-muted-foreground">This is the admin reports page. Implementation coming soon.</p>
-    </div>
-  );
+import { getReportsData } from "@/app/actions/admin"
+import { AdminReportsClient } from "./AdminReportsClient"
+
+export const metadata = {
+  title: "Reports & Analytics - Admin Dashboard",
+}
+
+export const dynamic = "force-dynamic"
+
+export default async function AdminReportsPage() {
+  const data = await getReportsData()
+
+  if (!data) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Unable to load reports data. Please ensure you are logged in as administrator.
+      </div>
+    )
+  }
+
+  return <AdminReportsClient data={data} />
 }

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Upload, FileText, X, Check, File, FileArchive } from "lucide-react"
 
+import Link from "next/link"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -279,7 +280,17 @@ export default function ChapterUploadPage() {
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               {getStatusBadge(file.status)}
-                              <a href={file.fileUrl} download className={buttonVariants({ variant: "link", size: "sm", className: "h-auto p-0 text-xs" })}>Download file</a>
+                              <div className="flex items-center gap-2">
+                                <Link 
+                                  href={`/chapters/${file.id}`} 
+                                  className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 text-xs" })}
+                                >
+                                  Feedback & Review
+                                </Link>
+                                <a href={file.fileUrl} download className={buttonVariants({ variant: "ghost", size: "sm", className: "h-7 text-xs" })}>
+                                  Download
+                                </a>
+                              </div>
                             </div>
                           </div>
                         ))}

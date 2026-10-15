@@ -14,8 +14,10 @@ export function SupervisorChaptersClient({ chapters }: { chapters: any[] }) {
   const [searchQuery, setSearchQuery] = React.useState("")
 
   const filteredChapters = chapters.filter((c) => {
-    return c.student.user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-           c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const studentName = c.student?.user?.name || ""
+    const title = c.title || ""
+    return studentName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           title.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
   return (
@@ -59,7 +61,7 @@ export function SupervisorChaptersClient({ chapters }: { chapters: any[] }) {
               <TableBody>
                 {filteredChapters.map((doc) => (
                   <TableRow key={doc.id}>
-                    <TableCell className="font-medium whitespace-nowrap">{doc.student.user.name}</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{doc.student?.user?.name || "Student"}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -86,7 +88,7 @@ export function SupervisorChaptersClient({ chapters }: { chapters: any[] }) {
                         <a href={doc.fileUrl} download={doc.fileName} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "ghost", size: "sm" })}>
                           <Download className="h-4 w-4" />
                         </a>
-                        <Link href={`/supervisor/chapters/${doc.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                        <Link href={`/chapters/${doc.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
                           <Eye className="h-4 w-4 mr-2" />
                           Review
                         </Link>

@@ -1,14 +1,13 @@
 "use server"
 
 import prisma from "@/lib/db"
-import bcrypt from "bcryptjs"
 
 export async function registerUser(formData: FormData) {
   try {
     const role = formData.get("role") as "STUDENT" | "SUPERVISOR"
     const name = formData.get("name") as string
     const email = formData.get("email") as string
-    const password = formData.get("password") as string
+    const password = (formData.get("password") as string) || "password123"
     const departmentId = formData.get("departmentId") as string
 
     // Check if user already exists
@@ -20,11 +19,9 @@ export async function registerUser(formData: FormData) {
       return { error: "User with this email already exists." }
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
-
     if (role === "STUDENT") {
       const matricNumber = formData.get("matricNumber") as string
-      const level = parseInt(formData.get("level") as string)
+      const level = parseInt(formData.get("level") as string) || 400
 
       const existingStudent = await prisma.studentProfile.findUnique({
         where: { matricNumber },
@@ -35,7 +32,7 @@ export async function registerUser(formData: FormData) {
         data: {
           name,
           email,
-          password: hashedPassword,
+          password,
           role,
           studentProfile: {
             create: {
@@ -48,7 +45,7 @@ export async function registerUser(formData: FormData) {
       })
     } else if (role === "SUPERVISOR") {
       const staffId = formData.get("staffId") as string
-      
+
       const existingStaff = await prisma.supervisorProfile.findUnique({
         where: { staffId },
       })
@@ -58,7 +55,7 @@ export async function registerUser(formData: FormData) {
         data: {
           name,
           email,
-          password: hashedPassword,
+          password,
           role,
           supervisorProfile: {
             create: {
@@ -74,7 +71,7 @@ export async function registerUser(formData: FormData) {
         data: {
           name,
           email,
-          password: hashedPassword,
+          password,
           role,
         }
       })

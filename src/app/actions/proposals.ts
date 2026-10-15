@@ -3,7 +3,7 @@
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
-import { TopicStatus } from "../../../generated/prisma/client"
+import { TopicStatus } from "@/types/models"
 import { resolveStudentProfile, resolveSupervisorProfile } from "@/lib/user-helper"
 
 export async function submitProposal(data: any, actionType: "draft" | "submit") {
@@ -29,10 +29,12 @@ export async function submitProposal(data: any, actionType: "draft" | "submit") 
         data: {
           studentId: studentProfile.id,
           title: "Default Topic",
-          status: "PENDING"
+          status: actionType === "submit" ? "PENDING" : "DRAFT"
         }
       })
     }
+
+    const nextStatus = actionType === "submit" ? "PENDING" : (topic.status === "PENDING" || topic.status === "APPROVED" ? topic.status : "DRAFT")
 
     await prisma.topic.update({
       where: { id: topic.id },
@@ -41,11 +43,28 @@ export async function submitProposal(data: any, actionType: "draft" | "submit") 
         problemStatement: data.problemStatement,
         objectives: data.objectives,
         methodology: data.methodology,
-        status: actionType === "submit" ? "PENDING" : topic.status
+        status: nextStatus
       }
     })
 
+    if (actionType === "submit" && studentProfile.supervisorId) {
+      const sup = await prisma.supervisorProfile.findUnique({
+        where: { id: studentProfile.supervisorId }
+      })
+      if (sup) {
+        await prisma.notification.create({
+          data: {
+            userId: sup.userId,
+            title: "Proposal Submitted",
+            message: "A student submitted a project proposal for review.",
+            link: "/supervisor/proposals"
+          }
+        })
+      }
+    }
+
     revalidatePath("/student/proposal")
+    revalidatePath("/supervisor/proposals")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -98,15 +117,32 @@ export async function reviewProposal(topicId: string, status: TopicStatus, revie
       return { success: false, error: "Unauthorized" }
     }
 
-    await prisma.topic.update({
+    const updated = await prisma.topic.update({
       where: { id: topicId },
       data: {
         status,
         supervisorReview: reviewNotes
+      },
+      include: {
+        student: {
+          include: { user: true }
+        }
       }
     })
 
+    if (updated?.student?.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: updated.student.userId,
+          title: "Proposal Review Updated",
+          message: `Your project proposal has been marked as ${status.toLowerCase()} by your supervisor.`,
+          link: "/student/proposal"
+        }
+      })
+    }
+
     revalidatePath("/supervisor/proposals")
+    revalidatePath("/student/proposal")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }

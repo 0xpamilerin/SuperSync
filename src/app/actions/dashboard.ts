@@ -82,8 +82,10 @@ export async function getStudentDashboardData() {
   const chaptersApproved = studentProfile.chapters.filter(c => c.status === "APPROVED").length
   const chaptersPending = studentProfile.chapters.filter(c => c.status === "PENDING").length
   
-  // Fake unread alerts for now
-  const unreadAlerts = 0 
+  // Real unread alerts
+  const unreadAlerts = await prisma.notification.count({
+    where: { userId: studentProfile.userId, isRead: false }
+  })
 
   return {
     studentProfile,
